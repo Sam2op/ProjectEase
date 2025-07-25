@@ -7,3 +7,6 @@ project-ease-backend/node_modules
 # Optional: ignore build output for frontend
 project-ease-frontend/build
 project-ease-frontend/dist
+
+project-ease-frontend/.env
+project-ease-backend/.env
