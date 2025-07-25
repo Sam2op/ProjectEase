@@ -1,0 +1,25 @@
+const express = require('express');
+const router = express.Router();
+const {
+  createRequest,
+  getAllRequests,
+  updateRequest,
+  getUserRequests
+} = require('../controllers/requestController');
+const {
+  optionalAuthMiddleware,
+  authMiddleware,
+  adminMiddleware
+} = require('../middlewares/authMiddleware');
+
+// submit request (guest or logged-in)
+router.post('/', optionalAuthMiddleware, createRequest);
+
+// user’s own requests
+router.get('/my', authMiddleware, getUserRequests);
+
+// admin list & update
+router.get('/', authMiddleware, adminMiddleware, getAllRequests);
+router.put('/:id', authMiddleware, adminMiddleware, updateRequest);
+
+module.exports = router;

@@ -1,0 +1,9 @@
+# Ignore front-end's node_modules
+project-ease-frontend/node_modules
+
+# Ignore backend's node_modules
+project-ease-backend/node_modules
+
+# Optional: ignore build output for frontend
+project-ease-frontend/build
+project-ease-frontend/dist

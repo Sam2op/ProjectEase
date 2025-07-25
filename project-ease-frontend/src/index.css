@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* index.css */
+.btn-gradient {
+  @apply bg-gradient-to-r from-sky-500 to-blue-600 text-white
+          shadow-lg ring-1 ring-sky-500/40 hover:brightness-110;
+}
