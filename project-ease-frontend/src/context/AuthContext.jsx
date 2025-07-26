@@ -30,17 +30,23 @@ axios.interceptors.request.use(
 )
 
 // Response interceptor for error handling
+// In your axios setup file or AuthContext.jsx
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only logout on 401 (Unauthorized), not on 400 (Bad Request)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Clear auth state and redirect to login
+      const msg = error.response.data?.message || 'Unauthorised';
+      toast.error(msg, { autoClose: 5000 });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
-)
+);
+
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)

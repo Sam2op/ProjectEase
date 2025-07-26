@@ -1,7 +1,9 @@
+// src/pages/Login.jsx
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import PasswordInput from '../components/PasswordInput'
 
 const Login = () => {
   const { register, handleSubmit } = useForm()
@@ -22,18 +24,27 @@ const Login = () => {
         <h2 className="text-2xl font-bold text-center text-sky-700">
           Login to ProjectEase
         </h2>
+        
         <input
           {...register('email', { required: true })}
           type="email"
           placeholder="Email"
           className="w-full border rounded-lg px-3 py-2"
         />
-        <input
-          {...register('password', { required: true })}
-          type="password"
+        
+        <PasswordInput
+          register={register}
+          name="password"
           placeholder="Password"
-          className="w-full border rounded-lg px-3 py-2"
+          rules={{ required: true }}
         />
+        
+        <div className="text-right">
+          <Link to="/forgot-password" className="text-sm text-sky-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+
         <button className="btn-gradient w-full py-2 rounded-lg text-white">
           Sign In
         </button>

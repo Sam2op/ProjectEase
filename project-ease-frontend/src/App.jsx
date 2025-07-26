@@ -16,7 +16,8 @@ import PrivateRoute from './components/PrivateRoute'
 import AdminRoute from './components/AdminRoute'
 import AdminProjects from './pages/AdminProjects'
 import VerifyEmail from './pages/VerifyEmail'
-
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 
 function App() {
@@ -29,6 +30,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <PrivateRoute>
