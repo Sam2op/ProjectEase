@@ -13,6 +13,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const requestRoutes = require('./routes/requestRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const collegeRoutes = require('./routes/collegeRoutes');
 
 // Import middleware
 const errorMiddleware = require('./middlewares/errorMiddleware');
@@ -34,6 +35,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/colleges', collegeRoutes);
 
 // Error handling middleware
 app.use(errorMiddleware);
