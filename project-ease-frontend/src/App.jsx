@@ -18,6 +18,7 @@ import AdminProjects from './pages/AdminProjects'
 import VerifyEmail from './pages/VerifyEmail'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import ProjectDetail from './pages/ProjectDetail'
 
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <PrivateRoute>
@@ -58,18 +60,21 @@ function App() {
 
       </Routes>
       
-      <ToastContainer 
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+      <ToastContainer
+  position="top-right"
+  autoClose={5000}
+  hideProgressBar={false}
+  newestOnTop={false}
+  closeOnClick
+  rtl={false}
+  pauseOnFocusLoss
+  draggable
+  pauseOnHover
+  theme="light"
+  limit={3} // Limit simultaneous toasts
+  toastClassName="custom-toast"
+  bodyClassName="custom-toast-body"
+/>
     </div>
   )
 }

@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
-import { Search, Eye, Clock, CheckCircle, AlertCircle, Filter } from 'lucide-react'
+import { Search, Eye, Clock, CheckCircle, AlertCircle, Filter, Monitor, Smartphone, Brain, Code, Star, DollarSign } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ProjectDetailsModal from '../components/ProjectDetailsModal'
 import RequestModal from '../components/RequestModal'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 
 const statusColor = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -14,6 +14,14 @@ const statusColor = {
   'in-progress': 'bg-blue-100 text-blue-700',
   completed: 'bg-sky-100 text-sky-700',
   rejected: 'bg-red-100 text-red-700'
+}
+
+const categoryIcons = {
+  web: Monitor,
+  mobile: Smartphone,
+  desktop: Monitor,
+  'ai-ml': Brain,
+  other: Code
 }
 
 const Dashboard = () => {
@@ -44,7 +52,7 @@ const Dashboard = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          toast.error('Failed to load your projects')
+          toast.error('Failed to load your projects', { autoClose: 5000 })
         }
       }
     }
@@ -66,7 +74,7 @@ const Dashboard = () => {
           }
         } catch (err) {
           if (!cancelled) {
-            toast.error('Failed to load projects')
+            toast.error('Failed to load projects', { autoClose: 5000 })
           }
         } finally {
           if (!cancelled) {
@@ -203,154 +211,222 @@ const Dashboard = () => {
         <div className="grid gap-6">
           {filter === 'my-projects' ? (
             // Render user's requests
-            filteredData.map((request) => (
-              <motion.div
-                key={request._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-grow">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-xl font-semibold text-sky-700">
-                          {request.project?.name || request.customProject?.name}
-                        </h3>
-                        <p className="text-gray-600 text-sm mt-1">
-                          {request.project?.description || request.customProject?.description}
-                        </p>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${statusColor[request.status]}`}>
-                        {getStatusIcon(request.status)}
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </span>
-                    </div>
-
-                    {/* Progress Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      {request.currentModule && (
-                        <div className="bg-blue-50 rounded-lg p-3">
-                          <p className="text-sm font-medium text-blue-700">Current Module</p>
-                          <p className="text-blue-600 text-sm">{request.currentModule}</p>
+            filteredData.map((request) => {
+              const primaryImage = request.project?.images?.find(img => img.isPrimary) || request.project?.images?.[0]
+              
+              return (
+                <motion.div
+                  key={request._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                >
+                  <div className="flex flex-col lg:flex-row">
+                    {/* Project Image */}
+                    <div className="lg:w-64 h-48 lg:h-auto">
+                      {primaryImage ? (
+                        <img
+                          src={primaryImage.url}
+                          alt={primaryImage.alt || request.project?.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
+                          <Monitor className="w-12 h-12 text-sky-400" />
                         </div>
                       )}
-                      
-                      {(request.actualPrice || request.estimatedPrice) && (
-                        <div className="bg-green-50 rounded-lg p-3">
-                          <p className="text-sm font-medium text-green-700">Price</p>
-                          <p className="text-green-600 font-semibold">₹{request.actualPrice || request.estimatedPrice}</p>
-                        </div>
-                      )}
-                      
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-sm font-medium text-gray-700">Payment Status</p>
-                        <p className={`text-sm font-medium ${
-                          request.paymentStatus === 'completed' 
-                            ? 'text-green-600'
-                            : request.paymentStatus === 'partial'
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
-                        }`}>
-                          {request.paymentStatus.charAt(0).toUpperCase() + request.paymentStatus.slice(1)}
-                        </p>
-                      </div>
                     </div>
 
-                    {/* Admin Notes */}
-                    {request.adminNotes && (
-                      <div className="bg-sky-50 border-l-4 border-sky-500 p-3 mb-4">
-                        <p className="text-sm font-medium text-sky-700">Latest Update</p>
-                        <p className="text-sky-600 text-sm">{request.adminNotes}</p>
-                      </div>
-                    )}
-                  </div>
+                    {/* Content */}
+                    <div className="flex-1 p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex-grow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h3 className="text-xl font-semibold text-sky-700">
+                                {request.project?.name || request.customProject?.name}
+                              </h3>
+                              <p className="text-gray-600 text-sm mt-1">
+                                {request.project?.description || request.customProject?.description}
+                              </p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${statusColor[request.status]}`}>
+                              {getStatusIcon(request.status)}
+                              {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                            </span>
+                          </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => setSelectedRequest(request)}
-                      className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View Details
-                    </button>
-                    
-                    {request.githubLink && (
-                      <a
-                        href={request.githubLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg transition-colors text-center"
-                      >
-                        <Eye className="w-4 h-4" />
-                        GitHub
-                      </a>
-                    )}
+                          {/* Progress Info */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            {request.currentModule && (
+                              <div className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-sm font-medium text-blue-700">Current Module</p>
+                                <p className="text-blue-600 text-sm">{request.currentModule}</p>
+                              </div>
+                            )}
+                            
+                            {(request.actualPrice || request.estimatedPrice) && (
+                              <div className="bg-green-50 rounded-lg p-3">
+                                <p className="text-sm font-medium text-green-700">Price</p>
+                                <p className="text-green-600 font-semibold">₹{request.actualPrice || request.estimatedPrice}</p>
+                              </div>
+                            )}
+                            
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-sm font-medium text-gray-700">Payment Status</p>
+                              <p className={`text-sm font-medium ${
+                                request.paymentStatus === 'completed' 
+                                  ? 'text-green-600'
+                                  : request.paymentStatus === 'partial'
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                              }`}>
+                                {request.paymentStatus.charAt(0).toUpperCase() + request.paymentStatus.slice(1)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Admin Notes */}
+                          {request.adminNotes && (
+                            <div className="bg-sky-50 border-l-4 border-sky-500 p-3 mb-4">
+                              <p className="text-sm font-medium text-sky-700">Latest Update</p>
+                              <p className="text-sky-600 text-sm">{request.adminNotes}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-2 lg:ml-4">
+                          <button
+                            onClick={() => setSelectedRequest(request)}
+                            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Details
+                          </button>
+                          
+                          {request.githubLink && (
+                            <a
+                              href={request.githubLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg transition-colors text-center whitespace-nowrap"
+                            >
+                              <Eye className="w-4 h-4" />
+                              GitHub
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              )
+            })
           ) : (
             // Render all projects for requesting
-            filteredData.map((project) => (
-              <motion.div
-                key={project._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-grow">
-                    <h3 className="text-xl font-semibold text-sky-700 mb-2">
-                      {project.name}
-                    </h3>
-                    <p className="text-gray-600 mb-3">
-                      {project.description}
-                    </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredData.map((project, index) => {
+                const CategoryIcon = categoryIcons[project.category] || Code
+                const primaryImage = project.images?.find(img => img.isPrimary) || project.images?.[0]
+                
+                return (
+                  <motion.div
+                    key={project._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    whileHover={{ y: -8 }}
+                    className="group"
+                  >
+                    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden h-full flex flex-col">
+                      {/* Project Image */}
+                      <div className="aspect-video overflow-hidden">
+                        {primaryImage ? (
+                          <img
+                            src={primaryImage.url}
+                            alt={primaryImage.alt || project.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
+                            <CategoryIcon className="w-12 h-12 text-sky-500" />
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <p className="text-sm font-medium text-blue-700">Category</p>
-                        <p className="text-blue-600 text-sm capitalize">{project.category}</p>
-                      </div>
-                      
-                      <div className="bg-green-50 rounded-lg p-3">
-                        <p className="text-sm font-medium text-green-700">Price</p>
-                        <p className="text-green-600 font-semibold">₹{project.price}</p>
-                      </div>
-                      
-                      <div className="bg-purple-50 rounded-lg p-3">
-                        <p className="text-sm font-medium text-purple-700">Duration</p>
-                        <p className="text-purple-600 text-sm">{project.duration}</p>
+                      {/* Project Info */}
+                      <div className="p-6 flex flex-col flex-grow">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-medium capitalize">
+                            {project.category}
+                          </span>
+                          <div className="flex items-center gap-1 text-yellow-500">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="text-sm font-medium text-gray-600">4.9</span>
+                          </div>
+                        </div>
+
+                        <h3 className="text-xl font-semibold text-sky-700 mb-2 group-hover:text-sky-800 transition-colors line-clamp-1">
+                          {project.name}
+                        </h3>
+                        
+                        <p className="text-gray-600 mb-4 line-clamp-2 flex-grow">
+                          {project.description}
+                        </p>
+
+                        {/* Tech Stack Preview */}
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {[
+                            ...(project.technologies?.frontend || []).slice(0, 2),
+                            ...(project.technologies?.backend || []).slice(0, 1)
+                          ].slice(0, 3).map((tech, techIndex) => (
+                            <span
+                              key={techIndex}
+                              className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                          {((project.technologies?.frontend?.length || 0) + (project.technologies?.backend?.length || 0)) > 3 && (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                              +{((project.technologies?.frontend?.length || 0) + (project.technologies?.backend?.length || 0)) - 3} more
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-1 text-green-600">
+                            <DollarSign className="w-4 h-4" />
+                            <span className="text-2xl font-bold">₹{project.price?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-gray-500">
+                            <Clock className="w-4 h-4" />
+                            <span className="text-sm">{project.duration}</span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-auto">
+                          <Link
+                            to={`/projects/${project._id}`}
+                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors text-center"
+                          >
+                            View Details
+                          </Link>
+                          <button
+                            onClick={() => setSelectedProject(project)}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                          >
+                            Request
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Technologies */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.technologies.map((tech, index) => (
-                        <span
-                          key={index}
-                          className="text-xs bg-sky-100 text-sky-700 px-2 py-1 rounded-md"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Action */}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => setSelectedProject(project)}
-                      className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                      Request Project
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))
+                  </motion.div>
+                )
+              })}
+            </div>
           )}
         </div>
       )}

@@ -34,11 +34,31 @@ const userSchema = new mongoose.Schema({
   },
   contactNumber: {
     type: String,
-    default: ''
+    required: [true, 'Contact number is required'],
+    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid contact number']
   },
   githubLink: {
     type: String,
-    default: ''
+    default: '',
+    validate: {
+      validator: function(v) {
+        return !v || /^https:\/\/github\.com\/[a-zA-Z0-9_-]+\/?$/.test(v);
+      },
+      message: 'Please enter a valid GitHub URL'
+    }
+  },
+  // New enhanced fields
+  userType: {
+    type: String,
+    enum: ['student', 'self-employed', 'professional'],
+    required: [true, 'User type is required']
+  },
+  college: {
+    type: String,
+    default: '',
+    required: function() {
+      return this.userType === 'student';
+    }
   },
   isEmailVerified: {
     type: Boolean,
@@ -58,7 +78,6 @@ const userSchema = new mongoose.Schema({
 // Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });

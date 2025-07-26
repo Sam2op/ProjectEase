@@ -4,35 +4,75 @@ const projectSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Project name is required'],
-    trim: true
+    trim: true,
+    maxlength: 100
   },
   description: {
     type: String,
-    required: [true, 'Project description is required']
+    required: [true, 'Project description is required'],
+    maxlength: 500
   },
-  technologies: [{
+  detailedDescription: {
     type: String,
-    required: true
-  }],
+    required: [true, 'Detailed description is required'],
+    maxlength: 2000
+  },
+  technologies: {
+    frontend: [{
+      type: String,
+      required: true
+    }],
+    backend: [{
+      type: String,
+      required: true
+    }],
+    database: [{
+      type: String
+    }],
+    other: [{
+      type: String
+    }]
+  },
   category: {
     type: String,
-    required: true,
+    required: [true, 'Category is required'],
     enum: ['web', 'mobile', 'desktop', 'ai-ml', 'other']
   },
   duration: {
     type: String,
-    required: true
+    required: [true, 'Duration is required']
   },
   price: {
     type: Number,
-    required: [true, 'Project price is required'],
+    required: [true, 'Price is required'],
     min: 0
   },
-  images: [{
-    type: String
-  }],
   features: [{
     type: String
+  }],
+  workflow: [{
+    step: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    }
+  }],
+  images: [{
+    url: {
+      type: String,
+      required: true
+    },
+    alt: {
+      type: String,
+      default: ''
+    },
+    isPrimary: {
+      type: Boolean,
+      default: false
+    }
   }],
   demoUrl: {
     type: String,
