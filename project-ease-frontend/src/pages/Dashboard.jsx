@@ -7,6 +7,9 @@ import { motion } from 'framer-motion'
 import ProjectDetailsModal from '../components/ProjectDetailsModal'
 import RequestModal from '../components/RequestModal'
 import { Navigate, Link } from 'react-router-dom'
+import CustomProjectModal from '../components/CustomProjectModal'
+import { Plus } from 'lucide-react'
+
 
 const statusColor = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -39,6 +42,7 @@ const Dashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showCustomProjectModal, setShowCustomProjectModal] = useState(false)
 
   // Fetch user's requests
   useEffect(() => {
@@ -184,6 +188,21 @@ const Dashboard = () => {
           <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
         </div>
       </div>
+
+      {/* Custom Project Button */}
+<div className="flex justify-between items-center mb-6">
+  <div className="text-sm text-gray-600">
+    Showing {filteredData.length} of {filter === 'my-projects' ? myRequests.length : allProjects.length} projects
+  </div>
+  
+  <button
+    onClick={() => setShowCustomProjectModal(true)}
+    className="btn-gradient text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:shadow-lg transition-shadow"
+  >
+    <Plus className="w-4 h-4" />
+    Request Custom Project
+  </button>
+</div>
 
       {/* Content */}
       {filteredData.length === 0 ? (
@@ -444,6 +463,12 @@ const Dashboard = () => {
         onClose={() => setSelectedProject(null)}
         project={selectedProject}
       />
+
+      {/* Custom Project Modal */}
+<CustomProjectModal
+  isOpen={showCustomProjectModal}
+  onClose={() => setShowCustomProjectModal(false)}
+/>
     </div>
   )
 }

@@ -86,6 +86,40 @@ const projectSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  // Additional fields for enhanced functionality
+  difficulty: {
+    type: String,
+    enum: ['beginner', 'intermediate', 'advanced'],
+    default: 'intermediate'
+  },
+  estimatedHours: {
+    type: Number,
+    min: 0
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  // Payment configuration
+  allowAdvancePayment: {
+    type: Boolean,
+    default: true
+  },
+  advancePercentage: {
+    type: Number,
+    default: 70,
+    min: 0,
+    max: 100
+  },
+  // Custom project related
+  isCustomProject: {
+    type: Boolean,
+    default: false
+  },
+  originalRequest: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Request'
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -94,5 +128,23 @@ const projectSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Index for better search performance
+projectSchema.index({ name: 'text', description: 'text', tags: 'text' });
+projectSchema.index({ category: 1, isActive: 1 });
+projectSchema.index({ price: 1 });
+
+// Virtual for calculated advance amount
+projectSchema.virtual('advanceAmount').get(function() {
+  return Math.round(this.price * (this.advancePercentage / 100));
+});
+
+// Virtual for remaining amount
+projectSchema.virtual('remainingAmount').get(function() {
+  return this.price - this.advanceAmount;
+});
+
+// Ensure virtuals are included in JSON output
+projectSchema.set('toJSON', { virtuals: true });
 
 module.exports = mongoose.model('Project', projectSchema);

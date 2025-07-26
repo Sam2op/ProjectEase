@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 const requestSchema = new mongoose.Schema({
-  type: {
+type: {
     type: String,
     enum: ['existing', 'custom'],
-    required: true
+    required: [true, 'Request type is required']
   },
+  
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',

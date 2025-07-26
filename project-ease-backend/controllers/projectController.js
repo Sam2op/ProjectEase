@@ -1,16 +1,54 @@
 const Project = require('../models/Project');
+const Request = require('../models/Request');
 
-// @desc   Get all projects (public)
+// @desc   Get all projects (including approved custom projects)
 // @route  GET /api/projects
 // @access Public
 exports.getProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find({ isActive: true })
-      .populate('createdBy', 'username')
-      .select('-detailedDescription -workflow') // Exclude heavy fields for listing
+    // Get regular projects
+    const projects = await Project.find({ isActive:true })
       .sort({ createdAt: -1 });
+
+    // Get approved custom requests that should be shown publicly
+    const approvedCustomRequests = await Request.find({
+      status: 'approved',
+      customProject: { $exists: true },
+      'customProject.showInCatalog': true
+    })
+      .populate('user', 'username')
+      .select('customProject actualPrice estimatedPrice createdAt updatedAt')
+      .sort({ updatedAt: -1 });
+
+    // Transform custom projects to look like regular projects
+    const customProjects = approvedCustomRequests.map(request => ({
+      _id: request._id,
+      name: request.customProject.name,
+      description: request.customProject.description,
+      category: request.customProject.category || 'other',
+      price: request.actualPrice || request.estimatedPrice || 0,
+      duration: request.customProject.timeline || 'TBD',
+      technologies: {
+        frontend: [],
+        backend: [],
+        database: [],
+        other: []
+      },
+      images: [],
+      isCustomProject: true,
+      createdBy: request.user,
+      createdAt: request.createdAt
+    }));
+
+    // Combine and sort all projects
+    const allProjects = [...projects, ...customProjects]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    res.status(200).json({ success: true, count: projects.length, projects });
+    res.status(200).json({ 
+      success: true, 
+      count: allProjects.length, 
+      projects: allProjects 
+    });
   } catch (err) {
     next(err);
   }
@@ -100,21 +138,6 @@ exports.deleteProject = async (req, res, next) => {
 
     await Project.findByIdAndDelete(req.params.id);
     res.status(200).json({ success: true, message: 'Project removed successfully' });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// @desc   Get all active projects for user dashboard
-// @route  GET /api/projects/dashboard
-// @access Private (User)
-exports.getDashboardProjects = async (req, res, next) => {
-  try {
-    const projects = await Project.find({ isActive: true })
-      .select('name description technologies.frontend technologies.backend category duration price images')
-      .sort({ createdAt: -1 });
-    
-    res.status(200).json({ success: true, count: projects.length, projects });
   } catch (err) {
     next(err);
   }
