@@ -224,7 +224,10 @@ const Projects = () => {
 
                       {/* Tech Stack Preview */}
                       <div className="flex flex-wrap gap-1 mb-4">
-                        {[...project.technologies.frontend, ...project.technologies.backend]
+                        {[
+  ...(project.technologies?.frontend  || []),
+  ...(project.technologies?.backend   || [])
+]
                           .slice(0, 3)
                           .map((tech, techIndex) => (
                             <span
@@ -234,7 +237,7 @@ const Projects = () => {
                               {tech}
                             </span>
                           ))}
-                        {(project.technologies.frontend.length + project.technologies.backend.length) > 3 && (
+                        {(project.technologies.frontend?.length + project.technologies.backend?.length) > 3 && (
                           <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                             +{(project.technologies.frontend.length + project.technologies.backend.length) - 3} more
                           </span>

@@ -28,13 +28,14 @@ exports.getProjects = async (req, res, next) => {
       category: request.customProject.category || 'other',
       price: request.actualPrice || request.estimatedPrice || 0,
       duration: request.customProject.timeline || 'TBD',
-      technologies: {
-        frontend: [],
-        backend: [],
-        database: [],
-        other: []
-      },
-      images: [],
+technologies: {
+  frontend: project.technologies?.frontend || [],
+  backend:  project.technologies?.backend  || [],
+  database: project.technologies?.database || [],
+  other:    project.technologies?.other    || []
+},
+images: project.images || []
+,
       isCustomProject: true,
       createdBy: request.user,
       createdAt: request.createdAt
