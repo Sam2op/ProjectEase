@@ -118,3 +118,18 @@ exports.deleteProject = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc   Get all active projects for user dashboard
+// @route  GET /api/projects/dashboard
+// @access Private (User)
+exports.getDashboardProjects = async (req, res, next) => {
+  try {
+    const projects = await Project.find({ isActive: true })
+      .select('name description technologies category duration price')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({ success: true, count: projects.length, projects });
+  } catch (err) {
+    next(err);
+  }
+};

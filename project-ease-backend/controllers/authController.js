@@ -1,16 +1,20 @@
+// controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sendEmail } = require('../utils/sendEmail');
 
-// Generate JWT token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
-};
+/* ───────────────────────────────────────────
+   Helpers
+─────────────────────────────────────────── */
 
-// Send token response
+// Generate JWT
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+
+// Send token + user payload
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
 
@@ -25,312 +29,270 @@ const sendTokenResponse = (user, statusCode, res) => {
       profilePicture: user.profilePicture,
       contactNumber: user.contactNumber,
       githubLink: user.githubLink,
-      isEmailVerified: user.isEmailVerified
-    }
+      isEmailVerified: user.isEmailVerified,
+    },
   });
 };
 
-// @desc    Register user
-// @route   POST /api/auth/signup
-// @access  Public
-const signup = async (req, res, next) => {
+/* ───────────────────────────────────────────
+   Auth: Sign-up (email verification)
+─────────────────────────────────────────── */
+exports.signup = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if user exists
+    // Prevent duplicates
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
+      $or: [{ email }, { username }],
     });
-
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email or username'
+        message: 'User already exists with this email or username',
       });
     }
 
-    // Create user
+    // Create unverified user
     const user = await User.create({
       username,
       email,
-      password
+      password,
+      isEmailVerified: false,
     });
 
-    // Generate email verification token
+    // Generate email-verification token
     const verificationToken = crypto.randomBytes(20).toString('hex');
     user.emailVerificationToken = crypto
       .createHash('sha256')
       .update(verificationToken)
       .digest('hex');
-
     await user.save({ validateBeforeSave: false });
 
     // Send verification email
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    
     const message = `
-      Welcome to ProjectEase!
-      
-      Please verify your email by clicking the link below:
-      ${verificationUrl}
-      
-      If you did not create this account, please ignore this email.
-    `;
+Welcome to ProjectEase!
 
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Email Verification - ProjectEase',
-        message
-      });
-    } catch (err) {
-      console.error('Email sending failed:', err);
-    }
+Click the link below to verify your email and activate your account:
+${verificationUrl}
 
-    sendTokenResponse(user, 201, res);
-  } catch (error) {
-    next(error);
+The link expires in 24 h. If you did not sign up, ignore this email.
+
+— ProjectEase Team
+`.trim();
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Verify your email – ProjectEase',
+      message,
+    });
+
+    res.status(201).json({
+      success: true,
+      message:
+        'Account created! Please verify your email before logging in.',
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
-const login = async (req, res, next) => {
+/* ───────────────────────────────────────────
+   Auth: Login
+─────────────────────────────────────────── */
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({
         success: false,
-        message: 'Please provide an email and password'
+        message: 'Please provide an email and password',
       });
-    }
 
-    // Check for user
     const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
+    if (!user)
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
+
+    // Check password first
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch)
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
+
+    // Fix for existing users: If isEmailVerified is undefined OR false for existing users, set to true
+    if (user.isEmailVerified === undefined || user.isEmailVerified === null) {
+      user.isEmailVerified = true;
+      await user.save({ validateBeforeSave: false });
     }
 
-    // Check if password matches
-    const isMatch = await user.comparePassword(password);
-
-    if (!isMatch) {
+    // ONLY block login if user was created AFTER email verification was implemented
+    // explicitly has isEmailVerified set to false (new unverified users)
+    if (user.isEmailVerified === false && user.createdAt > new Date('2025-07-26')) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Please verify your email before logging in. Check your inbox.',
       });
     }
 
     sendTokenResponse(user, 200, res);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    console.error('Login error:', err);
+    next(err);
   }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
-const getMe = async (req, res, next) => {
+
+/* ───────────────────────────────────────────
+   Auth: Get current user
+─────────────────────────────────────────── */
+exports.getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
-
-    res.status(200).json({
-      success: true,
-      user
-    });
-  } catch (error) {
-    next(error);
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    next(err);
   }
 };
 
-// @desc    Update password with automatic reset email
-// @route   PUT /api/auth/update-password
-// @access  Private
-const updatePassword = async (req, res, next) => {
+/* ───────────────────────────────────────────
+   Auth: Update password
+─────────────────────────────────────────── */
+exports.updatePassword = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select('+password');
 
-    // Check current password
-    if (!(await user.comparePassword(req.body.currentPassword))) {
-      return res.status(401).json({
+    if (!(await user.comparePassword(req.body.currentPassword)))
+      return res.status(400).json({
         success: false,
-        message: 'Current password is incorrect'
+        message: 'Current password is incorrect',
       });
-    }
 
-    // Update password
     user.password = req.body.newPassword;
     await user.save();
 
-    // Send password update confirmation email
-    const message = `
-      Your password has been successfully updated.
-      
-      If you did not make this change, please contact support immediately.
-      
-      Best regards,
-      ProjectEase Team
-    `;
-
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Password Updated Successfully - ProjectEase',
-        message
-      });
-    } catch (err) {
-      console.error('Email sending failed:', err);
-    }
-
-    sendTokenResponse(user, 200, res);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Forgot password - send reset email automatically
-// @route   POST /api/auth/forgot-password
-// @access  Public
-const forgotPassword = async (req, res, next) => {
-  try {
-    const user = await User.findOne({ email: req.body.email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No user found with this email'
-      });
-    }
-
-    // Get reset token
+    // Confirmation email
     const resetToken = user.createPasswordResetToken();
-
     await user.save({ validateBeforeSave: false });
-
-    // Create reset url
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const message = `
-      You are receiving this email because you (or someone else) has requested the reset of a password.
-      
-      Please click the link below to reset your password:
-      ${resetUrl}
-      
-      This link will expire in 10 minutes.
-      
-      If you did not request this, please ignore this email.
-    `;
+Hi ${user.username},
 
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Password Reset - ProjectEase',
-        message
-      });
+Your password was just changed. If this wasn’t you, reset it immediately:
+${resetUrl}
 
-      res.status(200).json({
-        success: true,
-        message: 'Password reset email sent successfully'
-      });
-    } catch (err) {
-      console.error(err);
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
+Link valid for 10 min.
 
-      await user.save({ validateBeforeSave: false });
+— ProjectEase Security
+`.trim();
 
-      return res.status(500).json({
-        success: false,
-        message: 'Email could not be sent'
-      });
-    }
-  } catch (error) {
-    next(error);
+    await sendEmail({
+      email: user.email,
+      subject: 'Your password was updated',
+      message,
+    });
+
+    res
+      .status(200)
+      .json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    next(err);
   }
 };
 
-// @desc    Reset password
-// @route   PUT /api/auth/reset-password/:resettoken
-// @access  Public
-const resetPassword = async (req, res, next) => {
+/* ───────────────────────────────────────────
+   Auth: Forgot password – send email
+─────────────────────────────────────────── */
+exports.forgotPassword = async (req, res, next) => {
   try {
-    // Get hashed token
-    const resetPasswordToken = crypto
+    const user = await User.findOne({ email: req.body.email });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: 'No user with that email' });
+
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const message = `
+You requested a password reset.
+
+Reset it here (valid 10 min): ${resetUrl}
+
+If you didn’t request this, please ignore the email.
+`.trim();
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Reset your password – ProjectEase',
+      message,
+    });
+
+    res.json({ success: true, message: 'Reset link sent' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/* ───────────────────────────────────────────
+   Auth: Reset password
+─────────────────────────────────────────── */
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const hashed = crypto
       .createHash('sha256')
       .update(req.params.resettoken)
       .digest('hex');
 
     const user = await User.findOne({
-      passwordResetToken: resetPasswordToken,
-      passwordResetExpires: { $gt: Date.now() }
+      passwordResetToken: hashed,
+      passwordResetExpires: { $gt: Date.now() },
     });
+    if (!user)
+      return res
+        .status(400)
+        .json({ success: false, message: 'Token invalid or expired' });
 
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired token'
-      });
-    }
-
-    // Set new password
     user.password = req.body.password;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
 
     sendTokenResponse(user, 200, res);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
-// @desc    Verify email
-// @route   GET /api/auth/verify-email/:token
-// @access  Public
-const verifyEmail = async (req, res, next) => {
+/* ───────────────────────────────────────────
+   Auth: Verify email
+─────────────────────────────────────────── */
+exports.verifyEmail = async (req, res, next) => {
   try {
-    const hashedToken = crypto
+    const hashed = crypto
       .createHash('sha256')
       .update(req.params.token)
       .digest('hex');
 
-    const user = await User.findOne({
-      emailVerificationToken: hashedToken
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid verification token'
-      });
-    }
+    const user = await User.findOne({ emailVerificationToken: hashed });
+    if (!user)
+      return res
+        .status(400)
+        .json({ success: false, message: 'Verification token invalid' });
 
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully'
-    });
-  } catch (error) {
-    next(error);
+    sendTokenResponse(user, 200, res);
+  } catch (err) {
+    next(err);
   }
-};
-
-module.exports = {
-  signup,
-  login,
-  getMe,
-  forgotPassword,
-  resetPassword,
-  updatePassword,
-  verifyEmail
 };

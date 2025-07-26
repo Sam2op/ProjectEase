@@ -69,3 +69,25 @@ exports.updateProfile = async (req, res, next) => {
     next(err);
   }
 };
+
+// @desc   Delete user account (self)
+// @route  DELETE /api/users/me
+// @access Private
+exports.deleteAccount = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    
+    // Delete all user's requests first
+    await req.deleteMany({ user: userId });
+    
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Account deleted successfully' 
+    });
+  } catch (err) {
+    next(err);
+  }
+};
