@@ -244,16 +244,18 @@ const Dashboard = () => {
                     {/* Project Image */}
                     <div className="lg:w-64 h-48 lg:h-auto">
                       {primaryImage ? (
-                        <img
-                          src={primaryImage.url}
-                          alt={primaryImage.alt || request.project?.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
-                          <Monitor className="w-12 h-12 text-sky-400" />
-                        </div>
-                      )}
+                          <img
+    src={`${import.meta.env.VITE_API_URL.replace('/api','')}${primaryImage.url}`}
+    alt={primaryImage.alt || request.project?.name}
+    className="w-full h-full object-cover"
+    onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
+  />
+) : (
+  <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
+    <Monitor className="w-12 h-12 text-sky-400" />
+  </div>
+)}
+
                     </div>
 
                     {/* Content */}
@@ -362,11 +364,11 @@ const Dashboard = () => {
                       {/* Project Image */}
                       <div className="aspect-video overflow-hidden">
                         {primaryImage ? (
-                          <img
-                            src={primaryImage.url}
-                            alt={primaryImage.alt || project.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
+                           <img
+  src={`${import.meta.env.VITE_API_URL.replace('/api','')}${primaryImage.url}`}
+  alt={primaryImage.alt || project.name}
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+/>
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
                             <CategoryIcon className="w-12 h-12 text-sky-500" />

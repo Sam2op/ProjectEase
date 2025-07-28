@@ -11,26 +11,16 @@ exports.createRequest = async (req, res, next) => {
       projectId, 
       customProject, 
       clientType = 'registered',
-      guestInfo,
-      paymentOption = 'advance'
+      guestInfo
     } = req.body;
-
-    // Validate payment option
-    if (!['advance', 'full'].includes(paymentOption)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid payment option. Must be "advance" or "full"'
-      });
-    }
 
     let requestData = {
       clientType,
-      paymentOption,
       status: 'pending',
       paymentStatus: 'pending',
-      approvalEmailSent: false
+      approvalEmailSent: false,
+      paymentOption: 'advance' // Default, can be changed after approval
     };
-
     // Set request type and validate accordingly
     if (projectId) {
       requestData.type = 'existing';
@@ -46,14 +36,6 @@ exports.createRequest = async (req, res, next) => {
       requestData.project = projectId;
       requestData.estimatedPrice = project.price;
       
-      // Calculate payment amounts
-      if (paymentOption === 'advance') {
-        requestData.advanceAmount = Math.round(project.price * 0.7);
-        requestData.remainingAmount = project.price - requestData.advanceAmount;
-      } else {
-        requestData.advanceAmount = project.price;
-        requestData.remainingAmount = 0;
-      }
     } else if (customProject) {
       requestData.type = 'custom';
       
@@ -110,7 +92,11 @@ Thank you for your project request! We've received your submission and our team 
 Project Details:
 • Name: ${projectName}
 • Type: ${requestData.type === 'existing' ? 'Catalog Project' : 'Custom Project'}
-• Payment Option: ${paymentOption === 'advance' ? '70% Advance + 30% on Completion' : 'Full Payment'}
+• Payment Option: ${
+    request.paymentOption === 'advance'
+      ? '70% Advance + 30% on Completion'
+      : 'Full Payment'
+  }
 ${requestData.estimatedPrice > 0 ? `• Estimated Price: ₹${requestData.estimatedPrice}` : ''}
 
 We'll get back to you within 24 hours with more details and pricing information.
@@ -305,6 +291,59 @@ ProjectEase Team
         }
       }
     }
+
+    res.status(200).json({
+      success: true,
+      request
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc   Update payment option for approved request
+// @route  PUT /api/requests/:id/payment-option
+// @access Private (User)
+exports.updatePaymentOption = async (req, res, next) => {
+  try {
+    const { paymentOption } = req.body;
+    
+    if (!['advance', 'full'].includes(paymentOption)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment option'
+      });
+    }
+
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    if (request.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Can only select payment option for approved projects'
+      });
+    }
+
+    // Update payment option and recalculate amounts
+    request.paymentOption = paymentOption;
+    const price = request.actualPrice || request.estimatedPrice;
+    
+    if (paymentOption === 'advance') {
+      request.advanceAmount = Math.round(price * 0.7);
+      request.remainingAmount = price - request.advanceAmount;
+    } else {
+      request.advanceAmount = price;
+      request.remainingAmount = 0;
+    }
+
+    await request.save();
 
     res.status(200).json({
       success: true,

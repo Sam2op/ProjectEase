@@ -32,7 +32,7 @@ const Home = () => {
   }
 
   const stats = [
-    { number: '500+', label: 'Projects Completed:1000+ Happy Clients' },
+    { number: '500+', label: 'Projects Completed' },
     { number: '24/7', label: 'Support Available' },
     { number: '99%', label: 'Success Rate' }
   ]
@@ -169,11 +169,12 @@ const Home = () => {
                         {/* Project Image */}
                         <div className="aspect-video overflow-hidden">
                           {primaryImage ? (
-                            <img
-                              src={primaryImage.url}
-                              alt={primaryImage.alt || project.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                           <img
+  src={`${import.meta.env.VITE_API_URL.replace('/api','')}${primaryImage.url}`}
+  alt={primaryImage.alt || project.name}
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+/>
+
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
                               <CategoryIcon className="w-12 h-12 text-sky-500" />

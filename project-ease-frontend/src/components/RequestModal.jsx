@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, DollarSign, CreditCard, Clock, CheckCircle } from 'lucide-react'
+import { X, DollarSign, Clock, FileText } from 'lucide-react'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext'
 const RequestModal = ({ isOpen, onClose, project }) => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [paymentOption, setPaymentOption] = useState('advance')
   const [guestInfo, setGuestInfo] = useState({
     name: '',
     email: '',
@@ -21,11 +20,6 @@ const RequestModal = ({ isOpen, onClose, project }) => {
     }))
   }
 
-  const calculatePaymentAmount = () => {
-    if (!project?.price) return 0
-    return paymentOption === 'advance' ? Math.round(project.price * 0.7) : project.price
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -33,7 +27,6 @@ const RequestModal = ({ isOpen, onClose, project }) => {
     try {
       const requestData = {
         projectId: project._id,
-        paymentOption,
         clientType: user ? 'registered' : 'guest'
       }
 
@@ -48,10 +41,8 @@ const RequestModal = ({ isOpen, onClose, project }) => {
       const response = await axios.post('/requests', requestData)
 
       if (response.data.success) {
-        toast.success('Project request submitted successfully!', { autoClose: 5000 })
+        toast.success('Project request submitted successfully! We\'ll review it and get back to you within 24 hours.', { autoClose: 5000 })
         onClose()
-        // Reset form
-        setPaymentOption('advance')
         setGuestInfo({ name: '', email: '', contactNumber: '' })
       }
     } catch (error) {
@@ -94,80 +85,13 @@ const RequestModal = ({ isOpen, onClose, project }) => {
             </div>
           </div>
 
-          {/* Payment Options */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Payment Option</h3>
-            <div className="grid md:grid-cols-2 gap-4">
-              {/* 70% Advance Option */}
-              <div 
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                  paymentOption === 'advance' 
-                    ? 'border-sky-500 bg-sky-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setPaymentOption('advance')}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <input
-                    type="radio"
-                    name="paymentOption"
-                    value="advance"
-                    checked={paymentOption === 'advance'}
-                    onChange={(e) => setPaymentOption(e.target.value)}
-                    className="text-sky-600"
-                  />
-                  <CreditCard className="w-5 h-5 text-sky-600" />
-                  <span className="font-semibold text-gray-900">70% Advance</span>
-                </div>
-                <div className="ml-8">
-                  <p className="text-2xl font-bold text-green-600">
-                    ₹{Math.round(project.price * 0.7).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Pay now: ₹{Math.round(project.price * 0.7).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Remaining: ₹{(project.price - Math.round(project.price * 0.7)).toLocaleString()} (on completion)
-                  </p>
-                </div>
-              </div>
-
-              {/* Full Payment Option */}
-              <div 
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                  paymentOption === 'full' 
-                    ? 'border-sky-500 bg-sky-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setPaymentOption('full')}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <input
-                    type="radio"
-                    name="paymentOption"
-                    value="full"
-                    checked={paymentOption === 'full'}
-                    onChange={(e) => setPaymentOption(e.target.value)}
-                    className="text-sky-600"
-                  />
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="font-semibold text-gray-900">Full Payment</span>
-                </div>
-                <div className="ml-8">
-                  <p className="text-2xl font-bold text-green-600">
-                    ₹{project.price?.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600">Pay once, no remaining amount</p>
-                  <p className="text-sm text-green-600 font-medium">✨ Get 5% discount!</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Guest Information (if not logged in) */}
           {!user && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                Your Information
+              </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -211,14 +135,19 @@ const RequestModal = ({ isOpen, onClose, project }) => {
             </div>
           )}
 
-          {/* Payment Summary */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Payment Summary</h3>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Amount to pay now:</span>
-              <span className="text-2xl font-bold text-green-600">
-                ₹{calculatePaymentAmount().toLocaleString()}
-              </span>
+          {/* Info Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-blue-800 mb-1">What happens next?</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Our team will review your request within 24 hours</li>
+                  <li>• We'll provide detailed pricing and timeline estimates</li>
+                  <li>• Once approved, you'll choose your payment option</li>
+                  <li>• You'll receive regular updates throughout development</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -242,10 +171,7 @@ const RequestModal = ({ isOpen, onClose, project }) => {
                   Submitting...
                 </>
               ) : (
-                <>
-                  <CreditCard className="w-4 h-4" />
-                  Request Project
-                </>
+                'Submit Request'
               )}
             </button>
           </div>

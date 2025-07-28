@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, DollarSign, CreditCard, FileText, Lightbulb } from 'lucide-react'
+import { X, FileText, Lightbulb, Send } from 'lucide-react'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -45,17 +45,14 @@ const CustomProjectModal = ({ isOpen, onClose }) => {
         return
       }
 
-// In the handleSubmit function, you can explicitly set the type:
-const requestData = {
-  type: 'custom', // Explicitly set the type
-  customProject: {
-    ...customProject,
-    estimatedPrice: customProject.estimatedBudget ? parseInt(customProject.estimatedBudget) : 0
-  },
-  clientType: user ? 'registered' : 'guest',
-  paymentOption: 'advance'
-}
-
+      const requestData = {
+        customProject: {
+          ...customProject,
+          estimatedPrice: customProject.estimatedBudget ? parseInt(customProject.estimatedBudget) : 0
+        },
+        clientType: user ? 'registered' : 'guest',
+        paymentOption: 'advance' 
+      }
 
       if (!user) {
         if (!guestInfo.name || !guestInfo.email) {
@@ -68,7 +65,7 @@ const requestData = {
       const response = await axios.post('/requests', requestData)
 
       if (response.data.success) {
-        toast.success('Custom project request submitted successfully!', { autoClose: 5000 })
+        toast.success('Custom project request submitted successfully! We\'ll review your requirements and get back to you within 24 hours.', { autoClose: 5000 })
         onClose()
         // Reset form
         setCustomProject({
@@ -151,7 +148,7 @@ const requestData = {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Budget (₹)
+                  Estimated Budget (₹) (Optional)
                 </label>
                 <input
                   type="number"
@@ -165,7 +162,7 @@ const requestData = {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expected Timeline
+                  Expected Timeline (Optional)
                 </label>
                 <input
                   type="text"
@@ -195,7 +192,7 @@ const requestData = {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Detailed Requirements
+                Detailed Requirements (Optional)
               </label>
               <textarea
                 name="requirements"
@@ -267,13 +264,13 @@ const requestData = {
           {/* Info Box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <DollarSign className="w-5 h-5 text-blue-600 mt-0.5" />
+              <Send className="w-5 h-5 text-blue-600 mt-0.5" />
               <div>
                 <h4 className="font-semibold text-blue-800 mb-1">What happens next?</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Our team will review your requirements within 24 hours</li>
                   <li>• We'll provide detailed pricing and timeline estimates</li>
-                  <li>• Once approved, your project will be added to our development queue</li>
+                  <li>• Once approved, you'll choose your payment option</li>
                   <li>• You'll receive regular updates throughout the development process</li>
                 </ul>
               </div>
@@ -301,7 +298,7 @@ const requestData = {
                 </>
               ) : (
                 <>
-                  <CreditCard className="w-4 h-4" />
+                  <Send className="w-4 h-4" />
                   Submit Request
                 </>
               )}

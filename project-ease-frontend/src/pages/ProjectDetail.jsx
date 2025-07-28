@@ -85,10 +85,11 @@ const ProjectDetail = () => {
             <>
               <div className="relative overflow-hidden rounded-xl bg-gray-100 aspect-video">
                 <img
-                  src={project.images[currentImageIndex].url}
-                  alt={project.images[currentImageIndex].alt || project.name}
-                  className="w-full h-full object-cover"
-                />
+       src={`${import.meta.env.VITE_API_URL.replace('/api','')}${project.images[currentImageIndex].url}`}
+       alt={project.images[currentImageIndex].alt || project.name}
+       className="w-full h-full object-cover"
+       onError={e => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
+     />
                 {project.images.length > 1 && (
                   <>
                     <button
@@ -129,10 +130,11 @@ const ProjectDetail = () => {
                       }`}
                     >
                       <img
-                        src={img.url}
-                        alt={img.alt || project.name}
-                        className="w-full h-full object-cover"
-                      />
+             src={`${import.meta.env.VITE_API_URL.replace('/api','')}${img.url}`}
+             alt={img.alt || project.name}
+             className="w-full h-full object-cover"
+             onError={e => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
+           />
                     </button>
                   ))}
                 </div>
@@ -212,78 +214,82 @@ const ProjectDetail = () => {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8 mt-16">
-        <div className="lg:col-span-2 prose prose-sky max-w-none">
-          <h2>About This Project</h2>
-          <p>{project.detailedDescription}</p>
+<div className="grid lg:grid-cols-3 gap-8 mt-16">
+  {/* Left: About, Features & Workflow */}
+  <div className="lg:col-span-2 prose prose-sky max-w-none space-y-6">
+    <h2 className="text-2xl font-bold text-sky-700">About This Project</h2>
+    <p className="text-gray-700">{project.detailedDescription}</p>
 
-          {project.features && project.features.length > 0 && (
-            <>
-              <h2>Key Features</h2>
-              <ul>
-                {project.features.map((feature, i) => (
-                  <li key={i}>{feature}</li>
-                ))}
-              </ul>
-            </>
-          )}
+    {project.features?.length > 0 && (
+      <>
+        <h2 className="text-2xl font-bold text-sky-700">Key Features</h2>
+        <ul className="list-disc ml-6 space-y-2">
+          {project.features.map((feature, i) => (
+            <li key={i} className="text-gray-700">{feature}</li>
+          ))}
+        </ul>
+      </>
+    )}
 
-          {project.workflow && project.workflow.length > 0 && (
-            <>
-              <h2>Project Workflow</h2>
-              <ol className="list-decimal ml-6">
-                {project.workflow.map((step, i) => (
-                  <li key={i}>
-                    <strong>{step.step}:</strong> {step.description}
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-        </div>
-        <div>
-          <h2>Technology Stack</h2>
+    {project.workflow?.length > 0 && (
+      <>
+        <h2 className="text-2xl font-bold text-sky-700">Project Workflow</h2>
+        <ol className="list-decimal ml-6 space-y-2">
+          {project.workflow.map((step, i) => (
+            <li key={i} className="text-gray-700">
+              <strong className="text-sky-700">{step.step}:</strong> {step.description}
+            </li>
+          ))}
+        </ol>
+      </>
+    )}
+  </div>
 
-          {project.technologies.frontend && (
-            <>
-              <h3 className="flex items-center gap-2 mb-2">
-                <Monitor className="inline-block" /> Frontend
-              </h3>
-              <ul className="list-disc ml-6 mb-4">
-                {project.technologies.frontend.map((tech, i) => (
-                  <li key={i}>{tech}</li>
-                ))}
-              </ul>
-            </>
-          )}
+  {/* Right: Technology Stack */}
+  <div className="space-y-8">
+    <h2 className="text-2xl font-bold text-sky-700 mb-4">Technology Stack</h2>
 
-          {project.technologies.backend && (
-            <>
-              <h3 className="flex items-center gap-2 mb-2">
-                <Server className="inline-block" /> Backend
-              </h3>
-              <ul className="list-disc ml-6 mb-4">
-                {project.technologies.backend.map((tech, i) => (
-                  <li key={i}>{tech}</li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          {project.technologies.database && (
-            <>
-              <h3 className="flex items-center gap-2 mb-2">
-                <Database className="inline-block" /> Database
-              </h3>
-              <ul className="list-disc ml-6">
-                {project.technologies.database.map((tech, i) => (
-                  <li key={i}>{tech}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+    {(project.technologies?.frontend || []).length > 0 && (
+      <div className="bg-blue-50 rounded-lg p-4">
+        <h3 className="flex items-center gap-2 text-blue-700 font-semibold mb-2">
+          <Monitor className="w-5 h-5 text-blue-600" /> Frontend
+        </h3>
+        <ul className="list-disc ml-6 space-y-1">
+          {project.technologies.frontend.map((tech, i) => (
+            <li key={i} className="text-gray-700">{tech}</li>
+          ))}
+        </ul>
       </div>
+    )}
+
+    {(project.technologies?.backend || []).length > 0 && (
+      <div className="bg-green-50 rounded-lg p-4">
+        <h3 className="flex items-center gap-2 text-green-700 font-semibold mb-2">
+          <Server className="w-5 h-5 text-green-600" /> Backend
+        </h3>
+        <ul className="list-disc ml-6 space-y-1">
+          {project.technologies.backend.map((tech, i) => (
+            <li key={i} className="text-gray-700">{tech}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {(project.technologies?.database || []).length > 0 && (
+      <div className="bg-purple-50 rounded-lg p-4">
+        <h3 className="flex items-center gap-2 text-purple-700 font-semibold mb-2">
+          <Database className="w-5 h-5 text-purple-600" /> Database
+        </h3>
+        <ul className="list-disc ml-6 space-y-1">
+          {project.technologies.database.map((tech, i) => (
+            <li key={i} className="text-gray-700">{tech}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
+</div>
+
 
       <RequestModal
         isOpen={showRequestModal}

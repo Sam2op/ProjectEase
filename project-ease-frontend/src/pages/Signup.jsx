@@ -49,12 +49,16 @@ const Signup = () => {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      const signupData = {
-        ...data,
-        college: userType === 'student' ? collegeSearch : ''
-      }
-      
-      const response = await axios.post('/auth/signup', signupData)
+     const payload = {
+      username: data.username,
+      email: data.email,
+      password: data.password,
+      contactNumber: data.contactNumber,
+      userType: data.userType,
+      college: data.userType === 'student' ? collegeSearch : '',
+      githubLink: data.githubLink || ''
+    }
+      const response = await axios.post('/auth/signup', payload)
       if (response.data.success) {
         setEmailSent(true)
         toast.success(response.data.message, { autoClose: 5000 })

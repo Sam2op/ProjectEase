@@ -165,6 +165,9 @@ export const AuthProvider = ({ children }) => {
       autoClose: 3000,
       toastId: 'logout-success'
     })
+
+    // Force redirect to login page
+    navigate('/login', { replace: true })
   }
 
   const value = {

@@ -39,7 +39,8 @@ const sendTokenResponse = (user, statusCode, res) => {
 ─────────────────────────────────────────── */
 exports.signup = async (req, res, next) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, userType, contactNumber, college, githubLink } = req.body;
+
 
     // Prevent duplicates
     const existingUser = await User.findOne({
@@ -52,13 +53,26 @@ exports.signup = async (req, res, next) => {
       });
     }
 
+    if (!userType) {
+  return res.status(400).json({ success: false, message: 'User type is required' });
+}
+if (!contactNumber) {
+  return res.status(400).json({ success: false, message: 'Contact number is required' });
+}
+
+
     // Create unverified user
-    const user = await User.create({
-      username,
-      email,
-      password,
-      isEmailVerified: false,
-    });
+const user = await User.create({
+  username,
+  email,
+  password,
+  userType,
+  contactNumber,
+  college: userType === 'student' ? college : '',
+  githubLink: githubLink || '',
+  isEmailVerified: false
+});
+
 
     // Generate email-verification token
     const verificationToken = crypto.randomBytes(20).toString('hex');

@@ -4,7 +4,8 @@ const {
   createRequest,
   getAllRequests,
   updateRequest,
-  getUserRequests
+  getUserRequests,
+  updatePaymentOption
 } = require('../controllers/requestController');
 const {
   optionalAuthMiddleware,
@@ -21,5 +22,8 @@ router.get('/my', authMiddleware, getUserRequests);
 // admin list & update
 router.get('/', authMiddleware, adminMiddleware, getAllRequests);
 router.put('/:id', authMiddleware, adminMiddleware, updateRequest);
+
+router.put('/:id/payment-option', authMiddleware, updatePaymentOption);
+
 
 module.exports = router;
